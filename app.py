@@ -7,7 +7,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ── GLOBAL CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -15,20 +14,33 @@ st.markdown("""
 html, body, .stApp { background: #07070f !important; font-family: 'DM Sans', sans-serif; color: #e2e2ef; }
 [data-testid="stSidebar"] { background: #0d0d1a !important; border-right: 1px solid rgba(255,255,255,0.06) !important; }
 [data-testid="stSidebar"] > div:first-child { padding: 0 !important; }
-#MainMenu, footer, header { visibility: hidden; }
-[data-testid="stSidebarNav"] { display: none; }
+
+/* hide default streamlit nav but KEEP the toggle button */
+#MainMenu { visibility: hidden; }
+footer { visibility: hidden; }
+[data-testid="stSidebarNav"] { display: none !important; }
+
+/* Make sure sidebar toggle arrow is visible */
+[data-testid="collapsedControl"] {
+    display: block !important;
+    visibility: visible !important;
+    color: white !important;
+    background: #1a1a2e !important;
+    border-radius: 0 8px 8px 0 !important;
+}
+
 .block-container { padding: 2rem 2.5rem 4rem !important; max-width: 1280px; }
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: #07070f; }
 ::-webkit-scrollbar-thumb { background: #1e1e30; border-radius: 3px; }
 h1, h2, h3 { font-family: 'Syne', sans-serif !important; }
-div[data-testid="stNumberInput"] input, div[data-testid="stSelectbox"] > div > div, div[data-testid="stTextInput"] input, textarea {
+div[data-testid="stNumberInput"] input, div[data-testid="stSelectbox"] > div > div, textarea {
     background: rgba(255,255,255,0.04) !important; border: 1px solid rgba(255,255,255,0.09) !important;
-    color: #e2e2ef !important; border-radius: 10px !important; font-family: 'DM Sans', sans-serif !important;
+    color: #e2e2ef !important; border-radius: 10px !important;
 }
-div[data-testid="stNumberInput"] label, div[data-testid="stSelectbox"] label, div[data-testid="stTextInput"] label, .stSlider label {
-    font-family: 'DM Sans', sans-serif !important; font-size: 12px !important; color: #6b7280 !important;
-    font-weight: 400 !important; letter-spacing: 0.04em !important; text-transform: uppercase !important;
+div[data-testid="stNumberInput"] label, div[data-testid="stSelectbox"] label, .stSlider label {
+    font-size: 12px !important; color: #6b7280 !important; font-weight: 400 !important;
+    letter-spacing: 0.04em !important; text-transform: uppercase !important;
 }
 .stSlider > div > div > div { background: rgba(99,102,241,0.2) !important; }
 .stSlider > div > div > div > div { background: #6366f1 !important; }
@@ -43,10 +55,31 @@ div[data-testid="stNumberInput"] label, div[data-testid="stSelectbox"] label, di
 [data-testid="metric-container"] { background: rgba(255,255,255,0.03) !important; border: 1px solid rgba(255,255,255,0.07) !important; border-radius: 12px !important; padding: 16px 20px !important; }
 [data-testid="metric-container"] label { color: #6b7280 !important; font-size: 11px !important; text-transform: uppercase !important; }
 [data-testid="metric-container"] [data-testid="stMetricValue"] { font-family: 'Syne', sans-serif !important; font-size: 24px !important; color: #fff !important; }
-[data-testid="stTabs"] button { font-family: 'DM Sans', sans-serif !important; font-size: 13px !important; color: #6b7280 !important; }
+[data-testid="stTabs"] button { font-size: 13px !important; color: #6b7280 !important; }
 [data-testid="stTabs"] button[aria-selected="true"] { color: #a5b4fc !important; border-bottom-color: #6366f1 !important; }
-.stAlert { border-radius: 10px !important; }
 hr { border: none !important; border-top: 1px solid rgba(255,255,255,0.06) !important; margin: 24px 0 !important; }
+
+/* Page link styling */
+[data-testid="stPageLink"] a {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px 20px !important;
+    font-size: 13px !important;
+    color: #9ca3af !important;
+    text-decoration: none !important;
+    border-radius: 8px !important;
+    margin: 2px 8px !important;
+    transition: all 0.15s !important;
+}
+[data-testid="stPageLink"] a:hover {
+    background: rgba(99,102,241,0.12) !important;
+    color: #e2e2ef !important;
+}
+[data-testid="stPageLink"][aria-current="page"] a {
+    background: rgba(99,102,241,0.15) !important;
+    color: #a5b4fc !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -62,15 +95,15 @@ with st.sidebar:
     <div style="padding:14px 20px 6px; font-size:10px; color:#374151; letter-spacing:0.1em; text-transform:uppercase;">Navigation</div>
     """, unsafe_allow_html=True)
 
-    pages = {
-        "🏠  About": "pages/1_about.py",
-        "🔮  Single Prediction": "pages/2_single_prediction.py",
-        "📂  Bulk Prediction": "pages/3_bulk_prediction.py",
-        "📈  Analytics Dashboard": "pages/4_analytics_dashboard.py",
-        "🧠  Model Insights": "pages/5_model_insights.py",
-    }
-    for label in pages:
-        st.page_link(pages[label], label=label)
+    st.page_link("app.py",                          label="🏠  Home")
+    st.page_link("pages/1_about.py",                label="📖  About")
+    st.page_link("pages/2_single_prediction.py",    label="🔮  Single Prediction")
+    st.page_link("pages/3_bulk_prediction.py",      label="📂  Bulk Prediction")
+    st.page_link("pages/4_analytics_dashboard.py",  label="📈  Analytics Dashboard")
+    st.page_link("pages/5_model_insights.py",       label="🧠  Model Insights")
+    st.page_link("pages/6_history.py",              label="🕓  Prediction History")
+    st.page_link("pages/7_chat.py",                 label="💬  AI Assistant")
+    st.page_link("pages/8_explainability.py",       label="🔍  Explainable AI")
 
     st.markdown("""
     <div style="margin:20px 20px 0;">
@@ -82,9 +115,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-# ── HOME PAGE — split into st.columns to avoid raw HTML bug ──────────────────
-
-# Badge
+# ── HOME PAGE ─────────────────────────────────────────────────────────────────
 st.markdown("""
 <div style="padding-top:40px; margin-bottom:22px;">
     <div style="display:inline-flex; align-items:center; gap:7px; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.3); border-radius:20px; padding:5px 14px;">
@@ -94,7 +125,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Hero split into 2 columns
 hero_left, hero_right = st.columns([1.1, 0.9], gap="large")
 
 with hero_left:
@@ -176,10 +206,8 @@ with hero_right:
     </div>
     """, unsafe_allow_html=True)
 
-
-
 st.markdown("""
-<div style="text-align:center; padding:16px 0 8px; font-size:12px; color:#374151; letter-spacing:0.04em; border-top:1px solid rgba(255,255,255,0.05); margin-top:8px;">
+<div style="text-align:center; padding:24px 0 8px; font-size:12px; color:#374151; letter-spacing:0.04em; border-top:1px solid rgba(255,255,255,0.05); margin-top:24px;">
     Built with <span style="color:#6366f1;">Streamlit</span> · Random Forest · Telco Customer Churn Dataset · 7,043 customers
 </div>
 """, unsafe_allow_html=True)
