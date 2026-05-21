@@ -1,0 +1,34 @@
+{
+  "roc_auc": 0.8334,
+  "n_features": 11,
+  "feature_cols": [
+    "tenure",
+    "MonthlyCharges",
+    "TotalCharges",
+    "Contract",
+    "InternetService",
+    "OnlineSecurity",
+    "TechSupport",
+    "PaymentMethod",
+    "PaperlessBilling",
+    "Partner",
+    "SeniorCitizen"
+  ],
+  "n_estimators": 200,
+  "train_samples": 5625,
+  "test_samples": 1407,
+  "churn_rate": 0.2658,
+  "feature_importance": {
+    "tenure": 0.1691,
+    "MonthlyCharges": 0.1607,
+    "TotalCharges": 0.1697,
+    "Contract": 0.2185,
+    "InternetService": 0.1084,
+    "OnlineSecurity": 0.0243,
+    "TechSupport": 0.0182,
+    "PaymentMethod": 0.0788,
+    "PaperlessBilling": 0.022,
+    "Partner": 0.016,
+    "SeniorCitizen": 0.0143
+  }
+}
