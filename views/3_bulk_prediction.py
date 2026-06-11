@@ -5,7 +5,6 @@ import joblib
 import os
 import sys
 import json
-import io
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -136,6 +135,33 @@ def get_risk(prob):
     elif prob > 0.3: return "Medium"
     else: return "Low"
 
+def remember_bulk_predictions(df_results):
+    bulk_history = pd.DataFrame({
+        'source': 'Bulk',
+        'tenure': pd.to_numeric(df_results.get('tenure'), errors='coerce'),
+        'monthly_charges': pd.to_numeric(df_results.get('MonthlyCharges'), errors='coerce'),
+        'total_charges': pd.to_numeric(df_results.get('TotalCharges'), errors='coerce'),
+        'contract': df_results.get('Contract'),
+        'internet_service': df_results.get('InternetService'),
+        'payment_method': df_results.get('PaymentMethod'),
+        'churn_probability': pd.to_numeric(df_results.get('Churn_Probability'), errors='coerce'),
+        'risk_category': df_results.get('Risk_Category'),
+    })
+
+    signature = f"{len(bulk_history)}:{bulk_history['churn_probability'].sum():.4f}:{bulk_history['monthly_charges'].sum():.4f}"
+    if st.session_state.get('last_bulk_prediction_signature') == signature:
+        return
+
+    existing = st.session_state.get('bulk_prediction_history')
+    if existing is None or len(existing) == 0:
+        st.session_state['bulk_prediction_history'] = bulk_history
+    else:
+        st.session_state['bulk_prediction_history'] = pd.concat(
+            [existing, bulk_history],
+            ignore_index=True
+        )
+    st.session_state['last_bulk_prediction_signature'] = signature
+
 if uploaded_file:
     try:
         df_raw = pd.read_csv(uploaded_file)
@@ -154,12 +180,16 @@ if uploaded_file:
         # Process & predict
         with st.spinner("Running predictions..."):
             X = preprocess_bulk(df_raw)
+            if X.empty:
+                st.error("No valid rows found after preprocessing. Check the category values in your CSV.")
+                st.stop()
             probs = model.predict_proba(X)[:, 1]
 
-        df_results = df_raw.copy()
+        df_results = df_raw.loc[X.index].copy()
         df_results['Churn_Probability'] = (probs * 100).round(1)
         df_results['Risk_Category'] = [get_risk(p) for p in probs]
         df_results['Recommendation'] = [get_recommendation(p) for p in probs]
+        remember_bulk_predictions(df_results)
 
         # ── SUMMARY KPIs ──────────────────────────────────────────────────────
         total = len(df_results)
@@ -195,7 +225,7 @@ if uploaded_file:
                 <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Avg Churn Risk</div>
                 <div style="font-family:'Syne',sans-serif; font-size:26px; font-weight:800; color:#fff;">{avg_prob:.1f}%</div>
             </div>
-            {'<div style="flex:1; min-width:130px; background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.15); border-radius:12px; padding:16px 18px; text-align:center;"><div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Revenue at Risk/mo</div><div style="font-family:Syne,sans-serif; font-size:26px; font-weight:800; color:#fca5a5;">$' + f"{rev_at_risk:,.0f}" + '</div></div>' if rev_at_risk > 0 else ''}
+            {'<div style="flex:1; min-width:130px; background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.15); border-radius:12px; padding:16px 18px; text-align:center;"><div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Revenue at Risk/mo</div><div style="font-family:Syne,sans-serif; font-size:26px; font-weight:800; color:#fca5a5;">₹' + f"{rev_at_risk:,.0f}" + '</div></div>' if rev_at_risk > 0 else ''}
         </div>
         """, unsafe_allow_html=True)
 
@@ -204,9 +234,11 @@ if uploaded_file:
         st.markdown('<div style="font-family:\'Syne\',sans-serif; font-size:16px; font-weight:700; color:#fff; margin-bottom:16px;">Results Table</div>', unsafe_allow_html=True)
 
         # Filter
-        filter_col1, filter_col2 = st.columns([1, 3])
-        with filter_col1:
-            risk_filter = st.selectbox("Filter by Risk", ["All", "High", "Medium", "Low"])
+        risk_options = ["All", "High", "Medium", "Low"]
+        if hasattr(st, "pills"):
+            risk_filter = st.pills("Filter by Risk", risk_options, default="All")
+        else:
+            risk_filter = st.segmented_control("Filter by Risk", risk_options, default="All")
 
         display_df = df_results if risk_filter == "All" else df_results[df_results['Risk_Category'] == risk_filter]
 

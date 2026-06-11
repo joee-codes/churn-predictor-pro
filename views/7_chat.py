@@ -93,7 +93,7 @@ st.markdown(f"""
         🚨 <b>{kpis['high_risk']}</b> high risk customers
     </div>
     <div style="background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.1); border-radius:8px; padding:8px 14px; font-size:12px; color:#fca5a5;">
-        💸 <b>${kpis['revenue_at_risk']:,.0f}</b> revenue at risk
+        💸 <b>₹{kpis['revenue_at_risk']:,.0f}</b> revenue at risk
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -126,12 +126,12 @@ Platform context:
 - High risk customers: {kpis['high_risk']}
 - Medium risk customers: {kpis['medium_risk']}
 - Low risk customers: {kpis['low_risk']}
-- Revenue at risk per month: ${kpis['revenue_at_risk']:,.0f}
+- Revenue at risk per month: ₹{kpis['revenue_at_risk']:,.0f}
 - Average churn probability: {kpis['avg_probability']:.1f}%
 
 Model details:
 - Algorithm: Random Forest Classifier (200 trees)
-- ROC-AUC: ~83%
+- ROC-AUC: 83%
 - Features: tenure, MonthlyCharges, TotalCharges, Contract, InternetService, OnlineSecurity, TechSupport, PaymentMethod, PaperlessBilling, Partner, SeniorCitizen
 - Dataset: Telco Customer Churn (7,043 customers, 26.5% churn rate)
 

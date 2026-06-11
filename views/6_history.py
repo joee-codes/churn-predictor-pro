@@ -51,7 +51,7 @@ st.markdown(f"""
     </div>
     <div style="flex:1; min-width:120px; background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.15); border-radius:12px; padding:16px 18px; text-align:center;">
         <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Revenue at Risk</div>
-        <div style="font-family:'Syne',sans-serif; font-size:28px; font-weight:800; color:#fca5a5;">${kpis['revenue_at_risk']:,.0f}</div>
+        <div style="font-family:'Syne',sans-serif; font-size:28px; font-weight:800; color:#fca5a5;">₹{kpis['revenue_at_risk']:,.0f}</div>
     </div>
     <div style="flex:1; min-width:120px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:16px 18px; text-align:center;">
         <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Avg Churn Risk</div>
@@ -123,9 +123,27 @@ else:
     # ── TABLE ─────────────────────────────────────────────────────────────────
     st.markdown('<div style="font-family:\'Syne\',sans-serif; font-size:16px; font-weight:700; color:#fff; margin-bottom:16px;">All Predictions</div>', unsafe_allow_html=True)
 
-    fcol1, fcol2 = st.columns([1, 3])
-    with fcol1:
-        risk_filter = st.selectbox("Filter by Risk", ["All", "High", "Medium", "Low"])
+    st.markdown("""
+    <style>
+    /* Prediction History has one selectbox. Keep it as a chevron dropdown while
+       preventing the hidden search input from behaving like an editable field. */
+    div[data-testid="stSelectbox"] div[data-baseweb="select"],
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] * {
+        cursor: pointer !important;
+        user-select: none !important;
+    }
+    div[data-testid="stSelectbox"] input,
+    div[data-testid="stSelectbox"] input:hover,
+    div[data-testid="stSelectbox"] input:focus {
+        caret-color: transparent !important;
+        cursor: pointer !important;
+        pointer-events: none !important;
+        user-select: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    risk_filter = st.selectbox("Filter by Risk", ["All", "High", "Medium", "Low"])
 
     display_df = df if risk_filter == "All" else df[df['risk_category'] == risk_filter]
 

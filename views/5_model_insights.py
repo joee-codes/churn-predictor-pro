@@ -52,7 +52,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── MODEL METADATA CARDS ──────────────────────────────────────────────────────
-roc = meta.get('roc_auc', 0.83)
+roc = abs(float(meta.get('roc_auc', 0.83)))
 n_feat = meta.get('n_features', 11)
 n_train = meta.get('train_samples', 5634)
 n_trees = meta.get('n_estimators', 200)
@@ -61,7 +61,7 @@ st.markdown(f"""
 <div style="display:flex; gap:14px; margin-bottom:32px; flex-wrap:wrap;">
     <div style="flex:1; min-width:130px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:12px; padding:18px 20px;">
         <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">ROC-AUC Score</div>
-        <div style="font-family:'Syne',sans-serif; font-size:30px; font-weight:800; color:#a5b4fc;">{roc:.3f}</div>
+        <div style="font-family:'Syne',sans-serif; font-size:30px; font-weight:800; color:#a5b4fc;">{roc * 100:.1f}%</div>
     </div>
     <div style="flex:1; min-width:130px; background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.2); border-radius:12px; padding:18px 20px;">
         <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Features</div>
@@ -219,7 +219,7 @@ with tab2:
         if use_real:
             from sklearn.metrics import roc_curve, auc
             fpr, tpr, _ = roc_curve(y_test, y_proba)
-            roc_val = auc(fpr, tpr)
+            roc_val = abs(auc(fpr, tpr))
         else:
             # Simulated good ROC curve
             fpr = np.linspace(0, 1, 100)
@@ -227,7 +227,7 @@ with tab2:
             tpr = np.clip(np.sort(tpr), 0, 1)
             roc_val = roc
 
-        ax.plot(fpr, tpr, color=PALETTE['primary'], lw=2.5, label=f'AUC = {roc_val:.3f}', zorder=3)
+        ax.plot(fpr, tpr, color=PALETTE['primary'], lw=2.5, label=f'AUC = {roc_val * 100:.1f}%', zorder=3)
         ax.fill_between(fpr, tpr, alpha=0.1, color=PALETTE['primary'])
         ax.plot([0,1],[0,1], color='#374151', linestyle='--', lw=1, alpha=0.5)
         ax.set_xlabel('False Positive Rate', fontsize=9, color=PALETTE['muted'])
@@ -293,7 +293,7 @@ with tab2:
         </div>
         <div style="flex:1; min-width:110px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:12px; padding:16px; text-align:center;">
             <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">ROC-AUC</div>
-            <div style="font-family:'Syne',sans-serif; font-size:26px; font-weight:800; color:#a5b4fc;">{roc_val:.3f}</div>
+            <div style="font-family:'Syne',sans-serif; font-size:26px; font-weight:800; color:#a5b4fc;">{roc_val * 100:.1f}%</div>
         </div>
     </div>
     """, unsafe_allow_html=True)

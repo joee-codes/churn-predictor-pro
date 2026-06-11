@@ -29,6 +29,18 @@ def load_artifacts():
 
 model, FEATURE_COLS, meta = load_artifacts()
 
+if 'predicted' not in st.session_state:
+    st.session_state.predicted = False
+if 'last_analyzed_signature' not in st.session_state:
+    st.session_state.last_analyzed_signature = None
+if 'single_total_charges' not in st.session_state:
+    st.session_state.single_total_charges = 0.0
+
+def sync_total_charges():
+    tenure_val = st.session_state.get("single_tenure", 0) or 0
+    monthly_val = st.session_state.get("single_monthly_charges", 0.0) or 0.0
+    st.session_state.single_total_charges = round(float(tenure_val) * float(monthly_val), 2)
+
 plt.rcParams.update({
     'figure.facecolor': '#0d0d1a', 'axes.facecolor': '#0d0d1a',
     'axes.edgecolor': '#1f2937', 'axes.labelcolor': '#6b7280',
@@ -49,13 +61,36 @@ st.markdown("""
 # ── INPUT FORM ────────────────────────────────────────────────────────────────
 st.markdown('<div style="font-size:11px; color:#4b5563; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:16px; display:flex; align-items:center; gap:10px;">Customer Profile <span style="flex:1; height:1px; background:rgba(255,255,255,0.06); display:inline-block;"></span></div>', unsafe_allow_html=True)
 
+st.markdown("""
+<style>
+/* Keep selectboxes visually behaving like dropdowns with the native chevron. */
+div[data-testid="stSelectbox"] div[data-baseweb="select"],
+div[data-testid="stSelectbox"] div[data-baseweb="select"] * {
+    cursor: pointer !important;
+}
+div[data-testid="stSelectbox"] input {
+    caret-color: transparent !important;
+    cursor: pointer !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 col1, col2, col3 = st.columns(3, gap="large")
 
 with col1:
     st.markdown('<div style="font-size:12px; color:#6366f1; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:14px;">Account Info</div>', unsafe_allow_html=True)
-    tenure = st.slider("Tenure (months)", 0, 72, 12)
-    monthly_charges = st.number_input("Monthly Charges ($)", 20.0, 150.0, 70.0, 5.0)
-    total_charges = st.number_input("Total Charges ($)", 0.0, 10000.0, float(tenure * monthly_charges), 50.0)
+    tenure = st.number_input("Tenure (months)", min_value=0, max_value=10000, value=0, step=1, key="single_tenure", on_change=sync_total_charges)
+    monthly_charges = st.number_input("Monthly Charges (₹)", min_value=0.0, max_value=10000.0, value=0.0, step=5.0, key="single_monthly_charges", on_change=sync_total_charges)
+    sync_total_charges()
+    total_charges = st.number_input(
+        "Total Charges (₹)",
+        min_value=0.0,
+        max_value=100000000.0,
+        step=0.01,
+        format="%.2f",
+        key="single_total_charges",
+        help="Auto-calculated as Tenure × Monthly Charges.",
+    )
     senior_citizen = st.selectbox("Senior Citizen", ["No", "Yes"])
     partner = st.selectbox("Partner", ["No", "Yes"])
 
@@ -67,44 +102,57 @@ with col2:
         "Bank transfer (automatic)", "Credit card (automatic)"
     ])
     paperless_billing = st.selectbox("Paperless Billing", ["No", "Yes"])
-    internet_service = st.selectbox("Internet Service", ["No", "DSL", "Fiber optic"])
 
 with col3:
     st.markdown('<div style="font-size:12px; color:#ec4899; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:14px;">Services</div>', unsafe_allow_html=True)
+    internet_service = st.selectbox("Internet Service", ["No", "DSL", "Fiber optic"])
     online_security = st.selectbox("Online Security", ["No", "Yes"])
     tech_support = st.selectbox("Tech Support", ["No", "Yes"])
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── QUICK METRICS ──────────────────────────────────────────────────────────────
-contract_risk = {"Month-to-month": ("High Risk", "#ef4444"), "One year": ("Medium Risk", "#f59e0b"), "Two year": ("Low Risk", "#10b981")}
-risk_label, risk_color = contract_risk[contract]
-
-st.markdown(f"""
-<div style="display:flex; gap:14px; margin-bottom:24px; flex-wrap:wrap;">
-    <div style="flex:1; min-width:130px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:16px 18px;">
-        <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Lifetime Value</div>
-        <div style="font-family:'Syne',sans-serif; font-size:22px; font-weight:700; color:#fff;">${total_charges:,.0f}</div>
-    </div>
-    <div style="flex:1; min-width:130px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:16px 18px;">
-        <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Contract Risk</div>
-        <div style="font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:{risk_color};">{risk_label}</div>
-    </div>
-    <div style="flex:1; min-width:130px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:16px 18px;">
-        <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Tenure Band</div>
-        <div style="font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:#a5b4fc;">{'New' if tenure < 12 else 'Growing' if tenure < 36 else 'Loyal'}</div>
-    </div>
-    <div style="flex:1; min-width:130px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:16px 18px;">
-        <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Services Active</div>
-        <div style="font-family:'Syne',sans-serif; font-size:22px; font-weight:700; color:#fff;">{sum([online_security=='Yes', tech_support=='Yes', internet_service!='No'])}/3</div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+current_signature = (
+    tenure, monthly_charges, total_charges, senior_citizen, partner,
+    contract, payment_method, paperless_billing, internet_service,
+    online_security, tech_support
+)
+if st.session_state.predicted and st.session_state.last_analyzed_signature != current_signature:
+    st.session_state.predicted = False
 
 # ── PREDICT BUTTON ────────────────────────────────────────────────────────────
 col_b1, col_b2, col_b3 = st.columns([1, 2, 1])
 with col_b2:
     predict = st.button("🔮  Analyze Churn Risk", use_container_width=True)
+
+if predict:
+    st.session_state.predicted = True
+    st.session_state.last_analyzed_signature = current_signature
+
+# ── QUICK METRICS ──────────────────────────────────────────────────────────────
+if st.session_state.predicted:
+    contract_risk = {"Month-to-month": ("High Risk", "#ef4444"), "One year": ("Medium Risk", "#f59e0b"), "Two year": ("Low Risk", "#10b981")}
+    risk_label, risk_color = contract_risk[contract]
+
+    st.markdown(f"""
+    <div style="display:flex; gap:14px; margin-bottom:24px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:130px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:16px 18px;">
+            <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Lifetime Value</div>
+            <div style="font-family:'Syne',sans-serif; font-size:22px; font-weight:700; color:#fff;">₹{total_charges:,.0f}</div>
+        </div>
+        <div style="flex:1; min-width:130px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:16px 18px;">
+            <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Contract Risk</div>
+            <div style="font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:{risk_color};">{risk_label}</div>
+        </div>
+        <div style="flex:1; min-width:130px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:16px 18px;">
+            <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Tenure Band</div>
+            <div style="font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:#a5b4fc;">{'New' if tenure < 12 else 'Growing' if tenure < 36 else 'Loyal'}</div>
+        </div>
+        <div style="flex:1; min-width:130px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:16px 18px;">
+            <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Services Active</div>
+            <div style="font-family:'Syne',sans-serif; font-size:22px; font-weight:700; color:#fff;">{sum([online_security=='Yes', tech_support=='Yes', internet_service!='No'])}/3</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ── PREDICTION RESULTS ────────────────────────────────────────────────────────
 if predict:
@@ -129,6 +177,26 @@ if predict:
     risk_label_db = "High" if prob > 0.6 else "Medium" if prob > 0.3 else "Low"
     rec_db = "Immediate outreach + discount offer" if prob > 0.6 else "Proactive engagement + loyalty incentive" if prob > 0.3 else "Regular engagement + upsell opportunity"
     save_prediction(input_dict, prob, risk_label_db, rec_db)
+    single_history_row = pd.DataFrame([{
+        'source': 'Single',
+        'tenure': tenure,
+        'monthly_charges': monthly_charges,
+        'total_charges': total_charges,
+        'contract': contract,
+        'internet_service': internet_service,
+        'payment_method': payment_method,
+        'churn_probability': round(prob * 100, 1),
+        'risk_category': risk_label_db,
+    }])
+    existing_single_history = st.session_state.get('single_prediction_history')
+    if existing_single_history is None or len(existing_single_history) == 0:
+        st.session_state['single_prediction_history'] = single_history_row
+    else:
+        st.session_state['single_prediction_history'] = pd.concat(
+            [existing_single_history, single_history_row],
+            ignore_index=True
+        )
+    st.session_state['active_single_prediction'] = single_history_row
 
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown('<div style="font-family:\'Syne\',sans-serif; font-size:20px; font-weight:700; color:#fff; margin-bottom:20px;">Prediction Results</div>', unsafe_allow_html=True)
@@ -276,15 +344,15 @@ if predict:
     <div style="display:flex; gap:14px; margin-top:20px; flex-wrap:wrap;">
         <div style="flex:1; min-width:120px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:16px; text-align:center;">
             <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Monthly Revenue</div>
-            <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:#fff;">${monthly_charges:.0f}</div>
+            <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:#fff;">₹{monthly_charges:.0f}</div>
         </div>
         <div style="flex:1; min-width:120px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:16px; text-align:center;">
             <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Annual Revenue</div>
-            <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:#fff;">${yearly:,.0f}</div>
+            <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:#fff;">₹{yearly:,.0f}</div>
         </div>
         <div style="flex:1; min-width:120px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:16px; text-align:center;">
             <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Est. CAC (4×)</div>
-            <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:#fff;">${cac:,.0f}</div>
+            <div style="font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:#fff;">₹{cac:,.0f}</div>
         </div>
         <div style="flex:1; min-width:120px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:16px; text-align:center;">
             <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Retention Score</div>

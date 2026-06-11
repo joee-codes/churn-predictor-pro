@@ -26,7 +26,7 @@ st.markdown("""
 st.markdown("""
 <div style="display:flex; gap:16px; margin-bottom:40px; flex-wrap:wrap;">
     <div style="flex:1; min-width:160px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:14px; padding:20px 22px;">
-        <div style="font-family:'Syne',sans-serif; font-size:32px; font-weight:800; color:#a5b4fc;">~83%</div>
+        <div style="font-family:'Syne',sans-serif; font-size:32px; font-weight:800; color:#a5b4fc;">83%</div>
         <div style="font-size:12px; color:#6b7280; margin-top:4px; text-transform:uppercase; letter-spacing:0.06em;">ROC-AUC Score</div>
     </div>
     <div style="flex:1; min-width:160px; background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.2); border-radius:14px; padding:20px 22px;">
